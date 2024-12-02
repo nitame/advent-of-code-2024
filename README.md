@@ -6,3 +6,5 @@
   - [x] Part One
   - [x] Part Two
 - [ ] Day Two
+  - [x] Part One
+  - [ ] Part Two
