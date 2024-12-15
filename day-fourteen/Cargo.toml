@@ -1,0 +1,6 @@
+[package]
+name = "day-fourteen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
