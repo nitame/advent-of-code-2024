@@ -21,7 +21,7 @@ where
 
 fn puzzle_1(filename: PathBuf) -> i32 {
     let mut data = Vec::new();
-    let re = Regex::new(r"mul\((?<left>[0-9]{1,3}),(?<right>[0-9]{1,3})\)").unwrap();
+    let re = Regex::new(r"mul\((?<left>\d+),(?<right>\d+)\)").unwrap();
     if let Ok(lines) = read_lines(filename) {
         for line in lines {
             if let Ok(line) = line {
@@ -40,9 +40,41 @@ fn puzzle_1(filename: PathBuf) -> i32 {
     data.iter().sum()
 }
 
+fn puzzle_2(filename: PathBuf) -> i32 {
+    let mut sum_matches = Vec::new();
+    let mut sum = 0;
+    let mut process = true;
+    let re = Regex::new(r"mul\((\d+),(\d+)\)|do\(\)|don't\(\)").unwrap();
+    if let Ok(lines) = read_lines(filename) {
+        for line in lines {
+            if let Ok(line) = line {
+                let mul_sum: i32 = re
+                    .captures_iter(line.as_str())
+                    .map(|caps| {
+                        match &caps[0] {
+                            "do()" => process = true,
+                            "don't()" => process = false,
+                            _ => {
+                                if process {
+                                    let a = caps[1].parse::<i32>().unwrap();
+                                    let b = caps[2].parse::<i32>().unwrap();
+                                    return a * b;
+                                }
+                            }
+                        }
+                        0
+                    })
+                    .sum();
+                sum_matches.push(mul_sum);
+            }
+        }
+    }
+    sum_matches.iter().sum()
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{get_file_path, puzzle_1};
+    use crate::{get_file_path, puzzle_1, puzzle_2};
 
     #[test]
     fn it_returns_161() {
@@ -56,5 +88,19 @@ mod tests {
         let file_path = get_file_path("input.txt".to_string());
         let result = puzzle_1(file_path);
         assert_eq!(result, 174336360);
+    }
+
+    #[test]
+    fn it_returns_48() {
+        let file_path = get_file_path("two-test-input.txt".to_string());
+        let result = puzzle_2(file_path);
+        assert_eq!(result, 48);
+    }
+
+    #[test]
+    fn it_returns_puzzle_2_score() {
+        let file_path = get_file_path("input.txt".to_string());
+        let result = puzzle_2(file_path);
+        assert_eq!(result, 88802350);
     }
 }
