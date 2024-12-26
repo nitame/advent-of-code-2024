@@ -34,44 +34,53 @@ fn parse_input_to_vectors(filename: PathBuf) -> Vec<Vec<i32>> {
     data
 }
 
-fn reactor_safety_rule_compute(data: &Vec<Vec<i32>>) -> i32 {
-    let mut safe_count = 0;
-    for row in data {
-        let mut safe = true;
-        let croissante = if row.first() < row.last() {
-            true
-        } else {
-            false
-        };
-        for (index, datum) in row.clone().into_iter().enumerate() {
-            if index < row.len() - 1 {
-                let next = row[index + 1];
-                let delta = next - datum;
-                if i32::abs(delta) == 0 || i32::abs(delta) > 3 {
-                    safe = false;
-                    break;
-                }
-                if delta > 0 && !croissante || delta < 0 && croissante {
-                    safe = false;
-                    break;
-                }
-            }
-        }
-        if safe {
-            safe_count += 1;
+fn is_safe(report: &Vec<i32>) -> bool {
+    let order = report.first().cmp(&report.last());
+    let is_ordered = report.windows(2).all(|w| w[0].cmp(&w[1]) == order);
+    let is_under_threshold = report
+        .windows(2)
+        .all(|w| i32::abs(w[1] - w[0]) <= 3 && i32::abs(w[1] - w[0]) > 0);
+    is_ordered && is_under_threshold
+}
+
+fn safety_counter(reports: Vec<Vec<i32>>) -> i32 {
+    reports.into_iter().filter(|report| is_safe(report)).count() as i32
+}
+
+fn is_safe_with_tolerance(report: &Vec<i32>) -> bool {
+    let mut unsafe_count = 0;
+    if is_safe(report) {
+        return true;
+    }
+    for idx in 0..report.len() {
+        let rest = &report[idx + 1..];
+        if !is_safe(&rest.to_vec()) {
+            unsafe_count += 1;
         }
     }
-    safe_count
+    unsafe_count < 2
+}
+
+fn safety_counter_with_tolerance(reports: Vec<Vec<i32>>) -> i32 {
+    reports
+        .into_iter()
+        .filter(|report| is_safe_with_tolerance(report))
+        .count() as i32
 }
 
 fn puzzle_1(filename: PathBuf) -> i32 {
     let data = parse_input_to_vectors(filename);
-    reactor_safety_rule_compute(&data)
+    safety_counter(data)
+}
+
+fn puzzle_2(filename: PathBuf) -> i32 {
+    let data = parse_input_to_vectors(filename);
+    safety_counter_with_tolerance(data)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{get_file_path, puzzle_1};
+    use crate::{get_file_path, puzzle_1, puzzle_2};
 
     #[test]
     fn it_returns_2_safe_report() {
@@ -85,5 +94,19 @@ mod tests {
         let file_path = get_file_path("input.txt".to_string());
         let result = puzzle_1(file_path);
         assert_eq!(result, 390);
+    }
+
+    #[test]
+    fn it_returns_4() {
+        let file_path = get_file_path("test-input.txt".to_string());
+        let result = puzzle_2(file_path);
+        assert_eq!(result, 4);
+    }
+
+    #[test]
+    fn it_returns_puzzle_2_score() {
+        let file_path = get_file_path("input.txt".to_string());
+        let result = puzzle_2(file_path);
+        assert_eq!(result, 439);
     }
 }
